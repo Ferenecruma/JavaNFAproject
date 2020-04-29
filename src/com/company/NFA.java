@@ -152,8 +152,9 @@ public class NFA {
     }
 
     public void ReenumerateDFA(){
-        Integer counter = 0;
+        int counter = 0;
         Integer stateToRename = this.s0;
+        this.s0 = counter;
         HashSet<Integer> renamedStates = new HashSet<>();
         while (renamedStates.size() != this.getStates().size()){
             if (!renamedStates.contains(stateToRename)){
@@ -202,5 +203,31 @@ public class NFA {
             }
         }
         System.out.println("Not stumped states:  "+notStumped);
+    }
+
+    public void MinimizeDFA(){
+
+    }
+
+    @Override
+    public boolean equals(Object o) {
+
+        // If the object is compared with itself then return true
+        if (o == this) {
+            return true;
+        }
+
+        /* Check if o is an instance of Transition or not
+          "null instanceof [type]" also returns false */
+        if (!(o instanceof NFA)) {
+            return false;
+        }
+
+        // typecast o to NFA so that we can compare data members
+        NFA dfa = (NFA) o;
+
+        // Compare the data members and return accordingly
+        return dfa.States.equals(this.States) && dfa.getTransitions().equals(this.transitions)
+                && dfa.FinalStates.equals(this.FinalStates) && dfa.s0 == this.s0;
     }
 }
