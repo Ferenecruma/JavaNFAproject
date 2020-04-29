@@ -1,10 +1,7 @@
 package com.company;
 //Class that implements NFA
-import com.sun.source.tree.WhileLoopTree;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ObjectInputStream;
-import java.net.Inet4Address;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,11 +9,11 @@ public class NFA {
     private int alphabet_size = 0;
     private int states_num = 0;//Кількість станів
     private int s0;//Початковий стан
-    private Set<String> characters = new HashSet<String>();
-    private Set<Integer> FinalStates = new HashSet<Integer>();//Множина кінцевих станів
-    private Set<Integer> States = new HashSet<Integer>();
-    private ArrayList<Transition> transitions = new ArrayList<Transition>();//Фенції переходів
-    private HashMap<Integer, List<Integer>> StatesToCheckMap = new HashMap<Integer, List<Integer>>();
+    private Set<String> characters = new HashSet<>();
+    private Set<Integer> FinalStates = new HashSet<>();//Множина кінцевих станів
+    private Set<Integer> States = new HashSet<>();
+    private List<Transition> transitions = new LinkedList<>();//Фенції переходів
+    private HashMap<Integer, List<Integer>> StatesToCheckMap = new HashMap<>();
 
     public NFA(int s0) {
         this.alphabet_size = 0;
@@ -41,7 +38,7 @@ public class NFA {
         while (x.hasNextLine()) {
             String[] temp = x.nextLine().split(" ");
             String[] FinalStates = Arrays.copyOfRange(temp, 2, temp.length);
-            Integer FStates[] = new Integer[FinalStates.length];
+            Integer[] FStates = new Integer[FinalStates.length];
             for (int i = 0; i < FStates.length; i++) {
                 int Fstate = Integer.parseInt(FinalStates[i]);
                 this.States.add(Fstate);
@@ -52,6 +49,7 @@ public class NFA {
             Transition tr = new Transition(Integer.parseInt(temp[0]), temp[1], FStates);
             transitions.add(tr);
         }
+        this.states_num = this.States.size();
     }
 
     public Set<Integer> getStates() {
@@ -62,7 +60,7 @@ public class NFA {
         return this.StatesToCheckMap;
     }
 
-    public ArrayList<Transition> getTransitions() {
+    public List<Transition> getTransitions() {
         return this.transitions;
     }
 
@@ -102,18 +100,17 @@ public class NFA {
     //NFA to DFA algorithm implementation
     public NFA NFAtoDFA() {
         NFA dfa = new NFA(this.s0);
-        Set<Integer> SetOfKeysToCheck = new HashSet<Integer>(dfa.getStates());//States that hadn't not been checked yet
+        Set<Integer> SetOfKeysToCheck = new HashSet<>(dfa.getStates());//States that hadn't not been checked yet
         while (!SetOfKeysToCheck.isEmpty()) {  //while we are adding new states
             Set<Integer> TempSetOfKeysToCheck = new HashSet<>(SetOfKeysToCheck);
             for (Integer key : TempSetOfKeysToCheck) {  // Finding new transitions for states that are already at dfa
-                HashMap<String, List<Integer>> charToStates = new HashMap<String, List<Integer>>(); //Mapping from symbols of language to States
+                HashMap<String, List<Integer>> charToStates = new HashMap<>(); //Mapping from symbols of language to States
                 for (Integer state : dfa.getStatesToCheckMap().get(key)) {
                     for (Transition tr : this.getTransitions()) {
                         if (state.equals(tr.getFromState())) { // comparing Integers through equals() method
                             List<Integer> tempList = charToStates.get(tr.getSymbol());
                             if (tempList == null) {
-                                tempList = new ArrayList<Integer>();
-                                tempList.addAll(Arrays.asList(tr.getToState()));
+                                tempList = new ArrayList<>(Arrays.asList(tr.getToState()));
                                 charToStates.put(tr.getSymbol(), tempList);
                             } else {
                                 for (Integer x : tr.getToState()) {
@@ -166,7 +163,7 @@ public class NFA {
                         }
                         tr.setFromState(counter);
                     }
-                    if (Integer.compare(tr.getToState()[0], currState) == 0){
+                    if (currState.equals(tr.getToState()[0])){
                         tr.setToStates(new Integer[]{counter});
                     }
                 }
@@ -195,18 +192,66 @@ public class NFA {
             HashSet<Integer> tempSet = new HashSet<>(notStumped);
             for (Integer state : tempSet) {
                 for (Transition tr : this.getTransitions()) {
-                    if (Integer.compare(tr.getToState()[0],state) == 0 && !notStumped.contains(tr.getFromState())) {
+                    if (state.equals(tr.getToState()[0]) && !notStumped.contains(tr.getFromState())) {
                         notStumped.add(tr.getFromState());
                         addingNew = true;
                     }
                 }
             }
         }
-        System.out.println("Not stumped states:  "+notStumped);
+        Set<Integer> Stamped = new HashSet<>(this.States);
+        Stamped.removeAll(notStumped);
+        if (!Stamped.isEmpty()) this.RemoveStates(Stamped);
+    }
+
+    public void RemoveStates(Set<Integer> toRemove){
+        if(!toRemove.isEmpty()){
+            for (Integer state: toRemove){
+                this.States.remove(state);
+                this.FinalStates.remove(state);
+                this.transitions.removeIf(tr -> state.equals(tr.getFromState()) || state.equals(tr.getToState()[0]));
+            }
+        }
+    }
+
+    public HashMap<Integer, Set<Integer>> MinimizeHelper(Set<Integer> states){
+        this.DeleteStumped();
+        HashMap<Integer,Set<Integer>> tempMap = new HashMap<>();
+        for (Integer state: states){
+            Set<Integer> toStates = new HashSet<>();
+            for (Transition tr: this.getTransitions()){
+                if (state.equals(tr.getFromState())){
+                    toStates.add(tr.getToState()[0]);
+                }
+            }
+            tempMap.put(state,toStates);
+        }
+
+        Collection<Set<Integer>> list = tempMap.values();
+        for(Iterator<Set<Integer>> itr = list.iterator(); itr.hasNext();)
+        {
+            if(Collections.frequency(list, itr.next())>1)
+            {
+                itr.remove();
+            }
+        }
+        return tempMap;
     }
 
     public void MinimizeDFA(){
+        Set<Integer> NonFinal = new HashSet<>(this.States); // Non - final states
+        NonFinal.removeAll(this.FinalStates);
+        Set<Integer> StatesToRemove = new HashSet<>();
+        HashMap<Integer,Set<Integer>> StateNonFinal = this.MinimizeHelper(NonFinal);
+        HashMap<Integer,Set<Integer>> StateFinal = this.MinimizeHelper(FinalStates);
 
+        for (Integer state: this.States){
+            if ( !StateFinal.containsKey(state) || !StateNonFinal.containsKey(state)){
+                StatesToRemove.add(state);
+            }
+        }
+
+        this.RemoveStates(StatesToRemove);//Removing redundant states from DFA
     }
 
     @Override
@@ -227,6 +272,7 @@ public class NFA {
         NFA dfa = (NFA) o;
 
         // Compare the data members and return accordingly
+
         return dfa.States.equals(this.States) && dfa.getTransitions().equals(this.transitions)
                 && dfa.FinalStates.equals(this.FinalStates) && dfa.s0 == this.s0;
     }

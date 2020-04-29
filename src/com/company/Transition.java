@@ -62,7 +62,7 @@ public class Transition {
         Transition tr = (Transition) o;
 
         // Compare the data members and return accordingly
-        return Integer.compare(this.FromState, tr.FromState) == 0
+        return this.getFromState() == tr.getFromState()
                 && Arrays.equals(this.ToStates, tr.ToStates)
                     && this.symbol.equals(tr.symbol);
     }

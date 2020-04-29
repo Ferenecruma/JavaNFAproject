@@ -23,8 +23,7 @@ public class fileread {
         NFA dfa1 = myNFA1.NFAtoDFA();
         dfa.ReenumerateDFA();
         dfa1.ReenumerateDFA();
-        dfa.Display();
-        dfa1.Display();
+
         if (dfa.equals(dfa1)){
             System.out.println("Недетерміновані скінченні автомати еквівалентні.");
         }
