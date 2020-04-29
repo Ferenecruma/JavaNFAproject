@@ -215,7 +215,6 @@ public class NFA {
     }
 
     public HashMap<Integer, Set<Integer>> MinimizeHelper(Set<Integer> states){
-        this.DeleteStumped();
         HashMap<Integer,Set<Integer>> tempMap = new HashMap<>();
         for (Integer state: states){
             Set<Integer> toStates = new HashSet<>();
@@ -239,6 +238,7 @@ public class NFA {
     }
 
     public void MinimizeDFA(){
+        this.DeleteStumped();
         Set<Integer> NonFinal = new HashSet<>(this.States); // Non - final states
         NonFinal.removeAll(this.FinalStates);
         Set<Integer> StatesToRemove = new HashSet<>();
@@ -246,7 +246,7 @@ public class NFA {
         HashMap<Integer,Set<Integer>> StateFinal = this.MinimizeHelper(FinalStates);
 
         for (Integer state: this.States){
-            if ( !StateFinal.containsKey(state) || !StateNonFinal.containsKey(state)){
+            if ( !StateFinal.containsKey(state) && !StateNonFinal.containsKey(state)){
                 StatesToRemove.add(state);
             }
         }

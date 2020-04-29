@@ -17,12 +17,23 @@ public class fileread {
         }
     }
     public void readFile (){
+
         NFA myNFA = new NFA(x);
         NFA myNFA1 = new NFA(y);
         NFA dfa = myNFA.NFAtoDFA();
         NFA dfa1 = myNFA1.NFAtoDFA();
+
         dfa.ReenumerateDFA();
         dfa1.ReenumerateDFA();
+
+        dfa.MinimizeDFA();
+        dfa1.MinimizeDFA();
+
+        dfa.ReenumerateDFA();
+        dfa1.ReenumerateDFA();
+
+        dfa.Display();
+        dfa1.Display();
 
         if (dfa.equals(dfa1)){
             System.out.println("Недетерміновані скінченні автомати еквівалентні.");
