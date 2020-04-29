@@ -17,7 +17,7 @@ public class fileread {
     public void readFile (){
         NFA myNFA = new NFA(x);
         NFA dfa = myNFA.NFAtoDFA();
-        //dfa.ReenumerateDFA();
+        dfa.ReenumerateDFA();
         dfa.Display();
         dfa.DeleteStumped();
     }

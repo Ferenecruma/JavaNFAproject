@@ -106,43 +106,43 @@ public class NFA {
         while (!SetOfKeysToCheck.isEmpty()) {  //while we are adding new states
             Set<Integer> TempSetOfKeysToCheck = new HashSet<>(SetOfKeysToCheck);
             for (Integer key : TempSetOfKeysToCheck) {  // Finding new transitions for states that are already at dfa
+                HashMap<String, List<Integer>> charToStates = new HashMap<String, List<Integer>>(); //Mapping from symbols of language to States
                 for (Integer state : dfa.getStatesToCheckMap().get(key)) {
-                    HashMap<String, List<Integer>> charToStates = new HashMap<String, List<Integer>>(); //Mapping from symbols of language to States
-                        for (Transition tr : this.getTransitions()) {
-                            if (state.equals(tr.getFromState())) { // comparing Integers through equals() method
-                                List<Integer> tempList = charToStates.get(tr.getSymbol());
-                                if (tempList == null) {
-                                    tempList = new ArrayList<Integer>();
-                                    tempList.addAll(Arrays.asList(tr.getToState()));
-                                    charToStates.put(tr.getSymbol(), tempList);
-                                } else {
-                                    for (Integer x : tr.getToState()){
-                                        if (!tempList.contains(x))
-                                            tempList.add(x);
-                                    }
-                                }
-                            }
-                        }
-                    for (Map.Entry<String, List<Integer>> entry: charToStates.entrySet()){ // merging gotostates for current character and state
-                        List<Integer> copy = List.copyOf(entry.getValue()).stream().sorted().collect(Collectors.toList());// sorting list for correct hashing
-                        int hash = copy.hashCode();
-                        Transition NewTransition = new Transition(dfa.getStatesToCheckMap().get(key).hashCode(),entry.getKey(),new Integer[]{hash});
-                        if (!dfa.getTransitions().contains(NewTransition)){
-                            if(!dfa.getStates().contains(hash)) {
-                                dfa.addState(hash);
-                                SetOfKeysToCheck.add(hash);
-                            }
-                            dfa.addStatesToCheck(hash,copy);
-                            dfa.addTransition(NewTransition);
-                            for (Integer f: this.getFinalStates()){ //checking if merged state contains final state of nfa
-                                if (copy.contains(f)){
-                                    dfa.addFinalStates(hash);
-                                    break;
+                    for (Transition tr : this.getTransitions()) {
+                        if (state.equals(tr.getFromState())) { // comparing Integers through equals() method
+                            List<Integer> tempList = charToStates.get(tr.getSymbol());
+                            if (tempList == null) {
+                                tempList = new ArrayList<Integer>();
+                                tempList.addAll(Arrays.asList(tr.getToState()));
+                                charToStates.put(tr.getSymbol(), tempList);
+                            } else {
+                                for (Integer x : tr.getToState()) {
+                                    if (!tempList.contains(x))
+                                        tempList.add(x);
                                 }
                             }
                         }
                     }
+                }
 
+                for (Map.Entry<String, List<Integer>> entry: charToStates.entrySet()){ // merging gotostates for current character and state
+                    List<Integer> copy = List.copyOf(entry.getValue()).stream().sorted().collect(Collectors.toList());// sorting list for correct hashing
+                    int hash = copy.hashCode();
+                    Transition NewTransition = new Transition(dfa.getStatesToCheckMap().get(key).hashCode(),entry.getKey(),new Integer[]{hash});
+                    if (!dfa.getTransitions().contains(NewTransition)){
+                        if(!dfa.getStates().contains(hash)) {
+                            dfa.addState(hash);
+                            SetOfKeysToCheck.add(hash);
+                        }
+                        dfa.addStatesToCheck(hash,copy);
+                        dfa.addTransition(NewTransition);
+                        for (Integer f: this.getFinalStates()){ //checking if merged state contains final state of nfa
+                            if (copy.contains(f)){
+                                dfa.addFinalStates(hash);
+                                break;
+                            }
+                        }
+                    }
                 }
                 SetOfKeysToCheck.remove(key);
             }
@@ -175,11 +175,17 @@ public class NFA {
                     this.FinalStates.add(counter);
                 }
 
+                if (this.States.contains(currState)){ //re enumerating states
+                    this.States.remove(currState);
+                    this.States.add(counter);
+                }
+
                 counter += 1;
                 renamedStates.add(currState);
             }
         }
     }
+
     public void DeleteStumped(){
         HashSet<Integer> notStumped = new HashSet<>(this.getFinalStates());
         boolean addingNew = true;
